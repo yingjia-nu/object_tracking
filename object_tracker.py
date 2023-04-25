@@ -1,5 +1,8 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+
+import pandas as pd
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -12,7 +15,9 @@ from deep_sort.detection import Detection
 from deep_sort.tracker import Tracker
 from deep_sort import generate_detections as gdet
 
-video_path   = "test.mp4"
+video_path = "football.mp4"
+data_out = pd.DataFrame(columns=['frame', 'time', 'id', 'x_left_up', 'y_left_up', 'x_right_bottom', 'y_right_bottom'])
+
 
 def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, CLASSES=YOLO_COCO_CLASSES, score_threshold=0.3, iou_threshold=0.45, rectangle_colors='', Track_only = []):
     # Definition of the parameters
@@ -42,6 +47,8 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
     NUM_CLASS = read_class_names(CLASSES)
     key_list = list(NUM_CLASS.keys()) 
     val_list = list(NUM_CLASS.values())
+
+    frame_num = 0
     while True:
         _, frame = vid.read()
 
@@ -73,8 +80,10 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
         pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
         pred_bbox = tf.concat(pred_bbox, axis=0)
 
+
         bboxes = postprocess_boxes(pred_bbox, original_frame, input_size, score_threshold)
         bboxes = nms(bboxes, iou_threshold, method='nms')
+
 
         # extract bboxes to boxes (x, y, width, height), scores and names
         boxes, scores, names = [], [], []
@@ -105,7 +114,8 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
             tracking_id = track.track_id # Get the ID for the particular track
             index = key_list[val_list.index(class_name)] # Get predicted object index by object name
             tracked_bboxes.append(bbox.tolist() + [tracking_id, index]) # Structure data, that we could use it with our draw_bbox function
-
+            data_out.loc[len(data_out.index)] = [frame_num, fps, tracking_id, bbox.tolist()[0],
+                                                 bbox.tolist()[1], bbox.tolist()[2], bbox.tolist()[3]]
         # draw detection on frame
         image = draw_bbox(original_frame, tracked_bboxes, CLASSES=CLASSES, tracking=True)
 
@@ -125,8 +135,9 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
         # draw original yolo detection
         #image = draw_bbox(image, bboxes, CLASSES=CLASSES, show_label=False, rectangle_colors=rectangle_colors, tracking=True)
 
-        print("Time: {:.2f}ms, Detection FPS: {:.1f}, total FPS: {:.1f}".format(ms, fps, fps2))
+        #print("Time: {:.2f}ms, Detection FPS: {:.1f}, total FPS: {:.1f}".format(ms, fps, fps2))
         if output_path != '': out.write(image)
+        frame_num += 1
         if show:
             cv2.imshow('output', image)
             
@@ -135,7 +146,8 @@ def Object_tracking(Yolo, video_path, output_path, input_size=416, show=False, C
                 break
             
     cv2.destroyAllWindows()
+    data_out.to_csv('position.csv', index=False)
 
 
 yolo = Load_Yolo_model()
-Object_tracking(yolo, video_path, "track.mp4", input_size=YOLO_INPUT_SIZE, show=False, iou_threshold=0.1, rectangle_colors=(255,0,0), Track_only = ["person"])
+Object_tracking(yolo, video_path, "football.avi", input_size=YOLO_INPUT_SIZE, show=False, iou_threshold=0.1, rectangle_colors=(255,0,0), Track_only=["person"])
