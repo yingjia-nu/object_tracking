@@ -1,26 +1,18 @@
 # ObjectTracking-DeepSORT-YOLOv3-TF2
-This repository implements YOLOv3 and Deep SORT in order to perform real-time object tracking. My Blog post https://medium.com/analytics-vidhya/object-tracking-using-deepsort-in-tensorflow-2-ec013a2eeb4f
+This repository implements YOLOv3 and Deep SORT in order to perform real-time object tracking.
 
 ## Installation
 
 First, clone or download this GitHub repository. Install requirements and download pretrained weights:
 
 ```
-https://github.com/anushkadhiman/ObjectTracking-DeepSORT-YOLOv3-TF2.git
-cd ObjectTracking-DeepSORT-YOLOv3-TF2
+https://github.com/yingjia-nu/object_tracking
 ````
 
 ```
 pip install -r ./requirements.txt
 `````
 
-```
-# yolov3
-wget -P model_data https://pjreddie.com/media/files/yolov3.weights
-
-# yolov3-tiny
-wget -P model_data https://pjreddie.com/media/files/yolov3-tiny.weights
-``````
 
 
 ## Tracking
